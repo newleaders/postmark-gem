@@ -1400,4 +1400,79 @@ describe Postmark::ApiClient do
       subject
     end
   end
+
+  describe '#deliver_bulk' do
+    let(:request_body) do
+      {
+        From: "sender@example.com",
+        Subject: "Hello",
+        HtmlBody: "<b>Hi there</b>",
+        TextBody: "Hi there",
+        MessageStream: "your-broadcast-stream",
+        Messages: [
+          { To: "a@example.com" },
+          { To: "b@example.com" }
+        ]
+      }
+    end
+
+    subject { api_client.deliver_bulk(request_body) }
+
+    it 'calls the API endpoint' do
+      expect(http_client).to receive(:post).with('email/bulk', match_json(request_body))
+      subject
+    end
+
+    describe 'response' do
+      let(:response) do
+        {
+          'Id' => 'f24af63c-533d-4b7a-ad65-4a7b3202d3a7',
+          'SubmittedAt' => '2026-03-17T07:25:01.4178645Z',
+          'Status' => 'Accepted',
+          'TotalMessages' => 500,
+          'PercentageCompleted' => 0.0,
+          'ReleasedCount' => 0,
+          'FailedCount' => 0,
+          'Subject' => 'July Newsletter'
+        }
+      end
+
+      it 'converts response to ruby format' do
+        expect(http_client).to receive(:post).with('email/bulk', match_json(request_body)) { response }
+        expect(subject).to eq({ id: 'f24af63c-533d-4b7a-ad65-4a7b3202d3a7', submitted_at: '2026-03-17T07:25:01.4178645Z', status: 'Accepted', total_messages: 500, percentage_completed: 0.0, released_count: 0, failed_count: 0, subject: 'July Newsletter' })
+      end
+
+    end
+  end
+
+  describe '#get_bulk_status' do
+    subject do
+      api_client.get_bulk_status('f24af63c-533d-4b7a-ad65-4a7b3202d3a7')
+    end
+
+    it 'calls the API endpoint' do
+      expect(http_client).to receive(:get).with('email/bulk/f24af63c-533d-4b7a-ad65-4a7b3202d3a7')
+      subject
+    end
+
+    describe 'response' do
+      let(:response) do
+        {
+          'Id' => 'f24af63c-533d-4b7a-ad65-4a7b3202d3a7',
+          'SubmittedAt' => '2026-03-17T07:25:01.4178645Z',
+          'Status' => 'Accepted',
+          'TotalMessages' => 500,
+          'PercentageCompleted' => 0.0,
+          'ReleasedCount' => 0,
+          'FailedCount' => 0,
+          'Subject' => 'July Newsletter'
+        }
+      end
+
+      it 'converts response to ruby format' do
+        expect(http_client).to receive(:get).with('email/bulk/f24af63c-533d-4b7a-ad65-4a7b3202d3a7') { response }
+        expect(subject).to eq({ id: 'f24af63c-533d-4b7a-ad65-4a7b3202d3a7', submitted_at: '2026-03-17T07:25:01.4178645Z', status: 'Accepted', total_messages: 500, percentage_completed: 0.0, released_count: 0, failed_count: 0, subject: 'July Newsletter' })
+      end
+    end
+  end
 end
